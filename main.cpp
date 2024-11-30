@@ -64,6 +64,14 @@ public:
         InOrder(root);
     }
 
+    void DisplayAllTasksInMonth(int month, int year) {
+        int daysInMonth = getDaysInMonth(month, year);
+        for (int day = 1; day <= daysInMonth; day++) {
+            string date = formatDate(year, month, day);
+            DisplayTasks(date);
+        }
+    }
+
     Node* Search(Node* node, const string& date) {
         if (!node || node->date == date) {
             return node;
@@ -102,14 +110,44 @@ private:
             InOrder(node->right);
         }
     }
+
+    // Check if a year is a leap year
+    bool isLeapYear(int year) {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    }
+
+    // Get the number of days in a given month and year
+    int getDaysInMonth(int month, int year) {
+        switch (month) {
+            case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+                return 31;
+            case 4: case 6: case 9: case 11:
+                return 30;
+            case 2:
+                if (isLeapYear(year)) {
+                    return 29;
+                } else {
+                    return 28;
+                }
+            default:
+                return 0;
+        }
+    }
+
+    // Format a date as "YYYY-MM-DD"
+    string formatDate(int year, int month, int day) {
+        char buffer[11];
+        snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d", year, month, day);
+        return string(buffer);
+    }
 };
 
-// Check if a year is a leap year
+// Check if leap year
 bool isLeapYear(int year) {
     return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 }
 
-// Get the number of days in a given month and year
+// Get the number of days in a given month/year
 int getDaysInMonth(int month, int year) {
     switch (month) {
         case 1: case 3: case 5: case 7: case 8: case 10: case 12:
@@ -127,7 +165,7 @@ int getDaysInMonth(int month, int year) {
     }
 }
 
-// Get the start day of the week for a given month and year (0 = Monday, 6 = Sunday)
+// Get the start day of the week for a given month/year
 int getStartDayOfMonth(int month, int year) {
     int totalDays = 0;
 
@@ -188,7 +226,11 @@ void printCalendar(int month, int year, TaskTree& taskTree) {
         if (taskTree.Search(taskTree.root, date)) {
             cout << "[" << day << "]";
         } else {
-            cout << " " << (day < 10 ? " " : "") << day << " ";
+            cout << " ";
+            if (day < 10) {
+                cout << " ";
+            }
+            cout << day << " ";
         }
 
         if ((startDay + day) % 7 == 0) {
@@ -210,58 +252,61 @@ int main() {
         cin >> year;
 
         if (month < 1 || month > 12) {
-            cout << "Invalid month. Please try again." << endl;
+            cout << "Invalid month. Try again." << endl;
             continue;
         }
 
-        cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), Quit (q): ";
+        cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View All Tasks in Month (m), Quit (q): ";
         cin >> choice;
 
-        while (choice == 'a' || choice == 'v' || choice == 'e' || choice == 'd') {
+        while (choice == 'a' || choice == 'v' || choice == 'e' || choice == 'd' || choice == 'm') {
             if (choice == 'a') {
-                cout << "Enter the day (1-31): ";
+                cout << "Enter day (1-31): ";
                 cin >> day;
                 cin.ignore(); 
 
-                cout << "Enter the task: ";
+                cout << "Enter task: ";
                 string task;
                 getline(cin, task);
                 addTask(year, month, day, task, taskTree);
 
             } else if (choice == 'v') {
-                cout << "Enter the day (1-31): ";
+                cout << "Enter day (1-31): ";
                 cin >> day;
                 displayTasks(year, month, day, taskTree);
 
             } else if (choice == 'e') {
-                cout << "Enter the day (1-31): ";
+                cout << "Enter day (1-31): ";
                 cin >> day;
                 string date = formatDate(year, month, day);
                 taskTree.DisplayTasks(date);
 
-                cout << "Enter the task number to edit: ";
+                cout << "Enter task number to edit: ";
                 int taskIndex;
                 cin >> taskIndex;
-                cin.ignore();  // Added to clear the input buffer
+                cin.ignore(); 
 
-                cout << "Enter the new task description: ";
+                cout << "Enter new task description: ";
                 string newTask;
                 getline(cin, newTask);
                 taskTree.EditTask(date, taskIndex - 1, newTask);
                 
             } else if (choice == 'd') {
-                cout << "Enter the day (1-31): ";
+                cout << "Enter day (1-31): ";
                 cin >> day;
                 string date = formatDate(year, month, day);
                 taskTree.DisplayTasks(date);
-                
-                cout << "Enter the task number to delete: ";
+
+                cout << "Enter task number to delete: ";
                 int taskIndex;
                 cin >> taskIndex;
                 taskTree.DeleteTask(date, taskIndex - 1);
+
+            } else if (choice == 'm') {
+                taskTree.DisplayAllTasksInMonth(month, year);
             }
 
-            cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), Quit (q): ";
+            cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View Tasks in Month (m), Quit (q): ";
             cin >> choice;
         }
 
