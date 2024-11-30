@@ -24,31 +24,46 @@ public:
         root = nullptr;
     }
 
-    // Add a task to the tree
     void Add(const string& date, const string& task) {
         root = Add(root, date, task);
     }
 
-    // Display tasks for a specific date
+    void EditTask(const string& date, int taskIndex, const string& newTask) {
+        Node* node = Search(root, date);
+        if (node && taskIndex >= 0 && taskIndex < node->tasks.size()) {
+            node->tasks[taskIndex] = newTask;
+            cout << "Task updated." << endl;
+        } else {
+            cout << "Invalid task index or date." << endl;
+        }
+    }
+
+    void DeleteTask(const string& date, int taskIndex) {
+        Node* node = Search(root, date);
+        if (node && taskIndex >= 0 && taskIndex < node->tasks.size()) {
+            node->tasks.erase(node->tasks.begin() + taskIndex);
+            cout << "Task deleted." << endl;
+        } else {
+            cout << "Invalid task index or date." << endl;
+        }
+    }
+
     void DisplayTasks(const string& date) {
         Node* node = Search(root, date);
         if (node) {
             cout << "Tasks for " << date << ":" << endl;
             for (int i = 0; i < node->tasks.size(); i++) {
-                const string& task = node->tasks[i];
-                cout << "- " << task << endl;
+                cout << i + 1 << ". " << node->tasks[i] << endl;
             }
         } else {
             cout << "No tasks for " << date << "." << endl;
         }
     }
 
-    // Display all tasks (in-order traversal)
     void DisplayAllTasks() {
         InOrder(root);
     }
 
-    // Check if a date exists in the tree
     Node* Search(Node* node, const string& date) {
         if (!node || node->date == date) {
             return node;
@@ -82,8 +97,7 @@ private:
             InOrder(node->left);
             cout << "Tasks for " << node->date << ":" << endl;
             for (int i = 0; i < node->tasks.size(); i++) {
-                const string& task = node->tasks[i];
-                cout << "- " << task << endl;
+                cout << "- " << node->tasks[i] << endl;
             }
             InOrder(node->right);
         }
@@ -200,44 +214,58 @@ int main() {
             continue;
         }
 
-        printCalendar(month, year, taskTree);
-
-        cout << "Add Task(a), View Tasks(b), Quit(q): ";
+        cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), Quit (q): ";
         cin >> choice;
-        while (choice == 'a' || choice == 'b') {
+
+        while (choice == 'a' || choice == 'v' || choice == 'e' || choice == 'd') {
             if (choice == 'a') {
-                cout << "Enter the day (1-" << getDaysInMonth(month, year) << "): ";
+                cout << "Enter the day (1-31): ";
                 cin >> day;
-                if (day < 1 || day > getDaysInMonth(month, year)) {
-                    cout << "Invalid day. Please try again." << endl;
-                    continue;
-                }
-                cin.ignore();
+                cin.ignore(); 
+
                 cout << "Enter the task: ";
                 string task;
                 getline(cin, task);
                 addTask(year, month, day, task, taskTree);
+
             } else if (choice == 'v') {
-                cout << "Enter the day (1-" << getDaysInMonth(month, year) << "): ";
+                cout << "Enter the day (1-31): ";
                 cin >> day;
-                if (day < 1 || day > getDaysInMonth(month, year)) {
-                    cout << "Invalid day. Please try again." << endl;
-                    continue;
-                }
                 displayTasks(year, month, day, taskTree);
+
+            } else if (choice == 'e') {
+                cout << "Enter the day (1-31): ";
+                cin >> day;
+                string date = formatDate(year, month, day);
+                taskTree.DisplayTasks(date);
+
+                cout << "Enter the task number to edit: ";
+                int taskIndex;
+                cin >> taskIndex;
+                cin.ignore();  // Added to clear the input buffer
+
+                cout << "Enter the new task description: ";
+                string newTask;
+                getline(cin, newTask);
+                taskTree.EditTask(date, taskIndex - 1, newTask);
+                
+            } else if (choice == 'd') {
+                cout << "Enter the day (1-31): ";
+                cin >> day;
+                string date = formatDate(year, month, day);
+                taskTree.DisplayTasks(date);
+                
+                cout << "Enter the task number to delete: ";
+                int taskIndex;
+                cin >> taskIndex;
+                taskTree.DeleteTask(date, taskIndex - 1);
             }
 
-            cout << "Do you want to (a)dd a task, (v)iew tasks, or (q)uit? ";
+            cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), Quit (q): ";
             cin >> choice;
         }
 
-        cout << "Input another month and year? (y/n): ";
-        cin >> choice;
-
-    } while (choice == 'y');
-
-    cout << "All tasks in the system:" << endl;
-    taskTree.DisplayAllTasks();
+    } while (choice != 'q');
 
     cout << "Goodbye!" << endl;
     return 0;
