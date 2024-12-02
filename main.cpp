@@ -307,6 +307,7 @@ int main() {
 
             } else if (choice == 'm') {
                 taskTree.DisplayAllTasksInMonth(month, year);
+            }
 
             cout << "\nOptions: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View Tasks in Month (m), Quit (q): ";
             cin >> choice;
