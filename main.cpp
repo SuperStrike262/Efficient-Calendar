@@ -245,6 +245,7 @@ int main() {
     int month, year, day;
     char choice;
 
+    // Loop until the user wants to quit
     do {
         cout << "Enter the month (1-12): ";
         cin >> month;
