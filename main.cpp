@@ -260,7 +260,7 @@ int main() {
     std::chrono::duration<double, std::milli> elapsed = end - start;
 
     // Print the elapsed time in milliseconds
-    std::cout << "Time taken: " << elapsed.count() << " ms" << std::endl;
+    cout << "Time taken: " << elapsed.count() << " ms" << endl;
 
     TaskTree taskTree;
     int month, year, day;
@@ -333,7 +333,7 @@ int main() {
                 for (int i = 0; i < 1e7; ++i) {
                     sum += i;
                 }
-                
+
                 taskTree.DisplayAllTasksInMonth(month, year);
 
                 // Get the ending timepoint
@@ -343,7 +343,7 @@ int main() {
                 std::chrono::duration<double, std::milli> elapsed = end - start;
 
                 // Print the elapsed time in milliseconds
-                std::cout << "Time taken: " << elapsed.count() << " ms" << std::endl;
+                cout << "\nTime taken to view tasks: " << elapsed.count() << " ms" << endl;
                 }
 
             cout << "\nOptions: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View Tasks in Month (m), Quit (q): ";
