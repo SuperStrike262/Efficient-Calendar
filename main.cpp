@@ -1,6 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <chrono>
+
 using namespace std;
 
 struct Node {
@@ -241,6 +243,25 @@ void printCalendar(int month, int year, TaskTree& taskTree) {
 }
 
 int main() {
+
+    // Get the starting timepoint
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // Code block to measure
+    long long sum = 0;
+    for (int i = 0; i < 1e7; ++i) {
+        sum += i;
+    }
+
+    // Get the ending timepoint
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Calculate the duration
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+
+    // Print the elapsed time in milliseconds
+    std::cout << "Time taken: " << elapsed.count() << " ms" << std::endl;
+
     TaskTree taskTree;
     int month, year, day;
     char choice;
@@ -304,8 +325,26 @@ int main() {
                 taskTree.DeleteTask(date, taskIndex - 1);
 
             } else if (choice == 'm') {
+                // Get the starting timepoint
+                auto start = std::chrono::high_resolution_clock::now();
+
+                // Code block to measure
+                long long sum = 0;
+                for (int i = 0; i < 1e7; ++i) {
+                    sum += i;
+                }
+                
                 taskTree.DisplayAllTasksInMonth(month, year);
-            }
+
+                // Get the ending timepoint
+                auto end = std::chrono::high_resolution_clock::now();
+
+                // Calculate the duration
+                std::chrono::duration<double, std::milli> elapsed = end - start;
+
+                // Print the elapsed time in milliseconds
+                std::cout << "Time taken: " << elapsed.count() << " ms" << std::endl;
+                }
 
             cout << "\nOptions: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View Tasks in Month (m), Quit (q): ";
             cin >> choice;
