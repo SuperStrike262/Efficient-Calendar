@@ -1,0 +1,169 @@
+#include <iostream>
+#include <unordered_map>
+#include <vector>
+#include <string>
+using namespace std;
+
+class TaskManager {
+private:
+    unordered_map<string, vector<string>> tasks;
+
+    bool isLeapYear(int year) const {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    }
+
+    string formatDate(int year, int month, int day) const {
+        char buffer[11];
+        snprintf(buffer, sizeof(buffer), "%04d-%02d-%02d", year, month, day);
+        return string(buffer);
+    }
+
+public:
+    int getDaysInMonth(int month, int year) const {
+        switch (month) {
+            case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+                return 31;
+            case 4: case 6: case 9: case 11:
+                return 30;
+            case 2:
+                return isLeapYear(year) ? 29 : 28;
+            default:
+                return 0;
+        }
+    }
+
+    void addTask(int year, int month, int day, const string& task) {
+        string date = formatDate(year, month, day);
+        tasks[date].push_back(task);
+        cout << "Task added for " << date << ": " << task << endl;
+    }
+
+    void editTask(int year, int month, int day, int taskIndex, const string& newTask) {
+        string date = formatDate(year, month, day);
+        if (tasks.find(date) != tasks.end() && taskIndex > 0 && taskIndex <= tasks[date].size()) {
+            tasks[date][taskIndex - 1] = newTask;
+            cout << "Task updated for " << date << "." << endl;
+        } else {
+            cout << "Invalid task number or no tasks for the specified date." << endl;
+        }
+    }
+
+    void deleteTask(int year, int month, int day, int taskIndex) {
+        string date = formatDate(year, month, day);
+        if (tasks.find(date) != tasks.end() && taskIndex > 0 && taskIndex <= tasks[date].size()) {
+            tasks[date].erase(tasks[date].begin() + (taskIndex - 1));
+            cout << "Task deleted for " << date << "." << endl;
+        } else {
+            cout << "Invalid task number or no tasks for the specified date." << endl;
+        }
+    }
+
+    void displayTasks(int year, int month, int day) const {
+        string date = formatDate(year, month, day);
+        if (tasks.find(date) != tasks.end() && !tasks.at(date).empty()) {
+            cout << "Tasks for " << date << ":" << endl;
+            for (size_t i = 0; i < tasks.at(date).size(); ++i) {
+                cout << i + 1 << ". " << tasks.at(date)[i] << endl;
+            }
+        } else {
+            cout << "No tasks for " << date << "." << endl;
+        }
+    }
+
+    void displayAllTasks() const {
+        if (tasks.empty()) {
+            cout << "No tasks available." << endl;
+            return;
+        }
+        cout << "All Tasks:" << endl;
+        for (const auto& pair : tasks) {
+            cout << pair.first << ":" << endl;
+            for (const auto& task : pair.second) {
+                cout << "- " << task << endl;
+            }
+        }
+    }
+};
+
+int main() {
+    TaskManager taskManager;
+    int year, month, day;
+    char choice;
+
+    do {
+        cout << "Enter the year: ";
+        cin >> year;
+        cout << "Enter the month (1-12): ";
+        cin >> month;
+
+        if (month < 1 || month > 12) {
+            cout << "Invalid month. Try again." << endl;
+            continue;
+        }
+
+        cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View All Tasks (w), Quit (q): ";
+        cin >> choice;
+
+        if (choice == 'a') {
+            cout << "Enter day (1-" << taskManager.getDaysInMonth(month, year) << "): ";
+            cin >> day;
+            if (day < 1 || day > taskManager.getDaysInMonth(month, year)) {
+                cout << "Invalid day for the specified month. Try again." << endl;
+                continue;
+            }
+            cin.ignore();
+            cout << "Enter task: ";
+            string task;
+            getline(cin, task);
+            taskManager.addTask(year, month, day, task);
+
+        } else if (choice == 'v') {
+            cout << "Enter day (1-" << taskManager.getDaysInMonth(month, year) << "): ";
+            cin >> day;
+            if (day < 1 || day > taskManager.getDaysInMonth(month, year)) {
+                cout << "Invalid day for the specified month. Try again." << endl;
+                continue;
+            }
+            taskManager.displayTasks(year, month, day);
+
+        } else if (choice == 'e') {
+            cout << "Enter day (1-" << taskManager.getDaysInMonth(month, year) << "): ";
+            cin >> day;
+            if (day < 1 || day > taskManager.getDaysInMonth(month, year)) {
+                cout << "Invalid day for the specified month. Try again." << endl;
+                continue;
+            }
+            taskManager.displayTasks(year, month, day);
+            cout << "Enter task number to edit: ";
+            int taskIndex;
+            cin >> taskIndex;
+            cin.ignore();
+            cout << "Enter new task description: ";
+            string newTask;
+            getline(cin, newTask);
+            taskManager.editTask(year, month, day, taskIndex, newTask);
+
+        } else if (choice == 'd') {
+            cout << "Enter day (1-" << taskManager.getDaysInMonth(month, year) << "): ";
+            cin >> day;
+            if (day < 1 || day > taskManager.getDaysInMonth(month, year)) {
+                cout << "Invalid day for the specified month. Try again." << endl;
+                continue;
+            }
+            taskManager.displayTasks(year, month, day);
+            cout << "Enter task number to delete: ";
+            int taskIndex;
+            cin >> taskIndex;
+            taskManager.deleteTask(year, month, day, taskIndex);
+
+        } else if (choice == 'w') {
+            taskManager.displayAllTasks();
+
+        } else if (choice != 'q') {
+            cout << "Invalid choice. Try again." << endl;
+        }
+    } while (choice != 'q');
+
+    cout << "Goodbye!" << endl;
+    return 0;
+}
