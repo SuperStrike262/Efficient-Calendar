@@ -205,42 +205,6 @@ void displayTasks(int year, int month, int day, TaskTree& taskTree) {
     taskTree.DisplayTasks(date);
 }
 
-// Print the calendar for a given month and year
-void printCalendar(int month, int year, TaskTree& taskTree) {
-    const string months[] = {
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-    };
-
-    cout << "      " << months[month - 1] << " " << year << endl;
-    cout << "Mo Tu We Th Fr Sa Su" << endl;
-
-    int startDay = getStartDayOfMonth(month, year);
-    int daysInMonth = getDaysInMonth(month, year);
-
-    for (int i = 0; i < startDay; i++) {
-        cout << "   ";
-    }
-
-    for (int day = 1; day <= daysInMonth; day++) {
-        string date = formatDate(year, month, day);
-        if (taskTree.Search(taskTree.root, date)) {
-            cout << "[" << day << "]";
-        } else {
-            cout << " ";
-            if (day < 10) {
-                cout << " ";
-            }
-            cout << day << " ";
-        }
-
-        if ((startDay + day) % 7 == 0) {
-            cout << endl;
-        }
-    }
-    cout << endl;
-}
-
 int main() {
     TaskTree taskTree;
     int month, year, day;
