@@ -256,7 +256,7 @@ int main() {
             continue;
         }
 
-        cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View All Tasks in Month (m), Quit (q): ";
+        cout << "\nOptions: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View All Tasks in Month (m), Quit (q): ";
         cin >> choice;
 
         while (choice == 'a' || choice == 'v' || choice == 'e' || choice == 'd' || choice == 'm') {
@@ -306,7 +306,7 @@ int main() {
                 taskTree.DisplayAllTasksInMonth(month, year);
             }
 
-            cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View Tasks in Month (m), Quit (q): ";
+            cout << "\nOptions: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View Tasks in Month (m), Quit (q): ";
             cin >> choice;
         }
 
