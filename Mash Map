@@ -70,16 +70,28 @@ public:
         }
     }
 
-    void displayAllTasks() const {
-        if (tasks.empty()) {
-            cout << "No tasks available." << endl;
+    void displayAllTasks(int year, int month) const {
+        int daysInMonth = getDaysInMonth(month, year);
+
+        if (daysInMonth == 0) {
+            cout << "Invalid month." << endl;
             return;
         }
-        cout << "All Tasks:" << endl;
-        for (const auto& pair : tasks) {
-            cout << pair.first << ":" << endl;
-            for (const auto& task : pair.second) {
-                cout << "- " << task << endl;
+
+        cout << "All Tasks for " << month << "/" << year << ":" << endl;
+
+        for (int day = 1; day <= daysInMonth; ++day) {
+            string date = formatDate(year, month, day);
+            cout << "Day " << day << ": ";
+
+            if (tasks.find(date) != tasks.end() && !tasks.at(date).empty()) {
+                // Print tasks for that day
+                for (const auto& task : tasks.at(date)) {
+                    cout << "\n- " << task << endl;
+                }
+            } else {
+                // No tasks for that day
+                cout << "No Task" << endl;
             }
         }
     }
@@ -90,17 +102,20 @@ int main() {
     int year, month, day;
     char choice;
 
-    do {
-        cout << "Enter the year: ";
-        cin >> year;
+    // Ask for the year and month once at the beginning
+    cout << "Enter the year: ";
+    cin >> year;
+    cout << "Enter the month (1-12): ";
+    cin >> month;
+
+    // Validate the month input
+    while (month < 1 || month > 12) {
+        cout << "Invalid month. Try again." << endl;
         cout << "Enter the month (1-12): ";
         cin >> month;
+    }
 
-        if (month < 1 || month > 12) {
-            cout << "Invalid month. Try again." << endl;
-            continue;
-        }
-
+    do {
         cout << "Options: Add Task (a), View Tasks (v), Edit Task (e), Delete Task (d), View All Tasks (w), Quit (q): ";
         cin >> choice;
 
@@ -157,13 +172,14 @@ int main() {
             taskManager.deleteTask(year, month, day, taskIndex);
 
         } else if (choice == 'w') {
-            taskManager.displayAllTasks();
+            taskManager.displayAllTasks(year, month);
 
         } else if (choice != 'q') {
             cout << "Invalid choice. Try again." << endl;
         }
     } while (choice != 'q');
 
-    cout << "Goodbye!" << endl;
+    cout << "You're all done!" << endl;
     return 0;
 }
+
