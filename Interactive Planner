@@ -1,154 +1,221 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
-#include <map>
 #include <vector>
-#include <string>
+#include <ctime>
+#include <sstream>
+#include <iomanip>
+#include <map>
 
-// Data structure to store tasks for each day
-std::map<std::string, std::vector<std::string>> tasks;
-std::string days[] = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
-sf::Color dayColors[] = {
-    sf::Color(255, 99, 71),    // Red for Monday
-    sf::Color(60, 179, 113),   // Green for Tuesday
-    sf::Color(100, 149, 237),  // Blue for Wednesday
-    sf::Color(255, 165, 0),    // Orange for Thursday
-    sf::Color(255, 255, 0),    // Yellow for Friday
-    sf::Color(138, 43, 226),   // Blueviolet for Saturday
-    sf::Color(255, 105, 180)   // HotPink for Sunday
-};
+// Helper function to get the week's dates based on an offset (weeks ahead or behind)
+std::vector<std::string> getWeekDates(int weekOffset) {
+    std::vector<std::string> daysWithDates(7);
+
+    std::time_t now = std::time(nullptr);
+    std::tm currentTime = *std::localtime(&now);
+
+    // Calculate the offset to the current week's starting day (Monday)
+    int dayOffset = currentTime.tm_wday == 0 ? -6 : 1 - currentTime.tm_wday;
+
+    // Move the start of the week forward or backward based on the weekOffset
+    currentTime.tm_mday += (weekOffset * 7); // Offset by weekOffset weeks
+    std::mktime(&currentTime);
+
+    // Loop through the days of the week
+    for (int i = 0; i < 7; ++i) {
+        std::tm dayTime = currentTime;
+        dayTime.tm_mday += dayOffset + i;
+        std::mktime(&dayTime);
+
+        std::ostringstream oss;
+        oss << std::put_time(&dayTime, "%b %d");
+        daysWithDates[i] = oss.str();
+    }
+
+    return daysWithDates;
+}
+
+
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(850, 500), "Interactive Weekly Planner");
+    const int windowWidth = 850;
+    const int windowHeight = 500;
 
-    // Background color
-    sf::Color backgroundColor(211, 211, 211);
+    sf::RenderWindow window(sf::VideoMode(windowWidth, windowHeight), "Interactive Weekly Planner");
 
-    // Load font
+    sf::Texture plannerTexture;
+    if (!plannerTexture.loadFromFile("/Users/absfolder/Desktop/planner.jpg")) {
+        std::cerr << "Error: Failed to load planner image.\n";
+        return -1;
+    }
+
+    sf::Sprite plannerSprite;
+    plannerSprite.setTexture(plannerTexture);
+
+    sf::Vector2u textureSize = plannerTexture.getSize();
+    plannerSprite.setScale(
+        static_cast<float>(windowWidth) / textureSize.x,
+        static_cast<float>(windowHeight) / textureSize.y
+    );
+
     sf::Font font;
     if (!font.loadFromFile("/System/Library/Fonts/Supplemental/Arial.ttf")) {
         std::cerr << "Error: Failed to load font.\n";
         return -1;
     }
 
-    // Input box and entered text
-    sf::RectangleShape inputBox(sf::Vector2f(400.f, 50.f));
-    inputBox.setFillColor(sf::Color::White);
-    inputBox.setPosition(225.f, 420.f);
+    int weekOffset = 0;  // Keeps track of the current week offset
+    std::vector<std::string> weekDates = getWeekDates(weekOffset);
 
-    sf::Text inputText("", font, 20);
-    inputText.setFillColor(sf::Color::Black);
-    inputText.setPosition(230.f, 430.f);
+    sf::Text dateText;
+    dateText.setFont(font);
+    dateText.setCharacterSize(15);
+    dateText.setFillColor(sf::Color::Black);
 
-    std::string userInput;
-    bool isInputActive = false;
+    sf::Vector2f positions[] = {
+        {380.f, 69.f}, {575.f, 69.f}, {770.f, 69.f},
+        {380.f, 267.f}, {575.f, 267.f}, {770.f, 267.f}, {770.f, 365.f}
+    };
 
-    // Instruction text
-    sf::Text instructionText("Click a day to select. Type a task below:", font, 18);
-    instructionText.setFillColor(sf::Color::Black);
-    instructionText.setPosition(20.f, 380.f);
+    // Use a map to store tasks for each week (key is the week offset)
+    std::map<int, std::vector<std::vector<std::string>>> weekTasks;
 
-    // Task display text
-    sf::Text taskText("", font, 16);
+    // Initialize the map for the current week
+    weekTasks[weekOffset] = std::vector<std::vector<std::string>>(7);
+
+    sf::Text taskText;
+    taskText.setFont(font);
+    taskText.setCharacterSize(12);
     taskText.setFillColor(sf::Color::Black);
-    taskText.setPosition(20.f, 100.f);
 
-    // Selected day
-    std::string selectedDay = "Monday";
+    // Input box and text
+    sf::RectangleShape inputBox(sf::Vector2f(200.f, 30.f));
+    inputBox.setFillColor(sf::Color(200, 200, 200));
+    inputBox.setOutlineThickness(2.f);
+    inputBox.setOutlineColor(sf::Color::Black);
+    inputBox.setPosition(400.f, 30.f);
 
-    // Create day boxes
-    sf::RectangleShape dayBox(sf::Vector2f(105.f, 65.f));
+    sf::Text inputText;
+    inputText.setFont(font);
+    inputText.setCharacterSize(15);
+    inputText.setFillColor(sf::Color::Black);
+    inputText.setPosition(inputBox.getPosition() + sf::Vector2f(5.f, 5.f));
 
-    // Main loop
+    std::string userInput = "";
+    int selectedDay = -1;
+    bool generalTaskSelected = false;
+
+    // General tasks data
+    sf::Text generalTaskText;
+    generalTaskText.setFont(font);
+    generalTaskText.setCharacterSize(12);
+    generalTaskText.setFillColor(sf::Color::Blue);
+
+    std::vector<std::string> generalTasks;
+
+    // Define where to render general tasks on the left
+    float generalTaskStartX = 50.f; // X-coordinate for the left side
+    float generalTaskStartY = 90.f; // Starting Y-coordinate for tasks
+    float generalTaskSpacing = 18.f; // Spacing between tasks
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
 
-            // Handle text input
-            if (event.type == sf::Event::TextEntered && isInputActive) {
-                if (event.text.unicode == '\b' && !userInput.empty()) { // Handle backspace
-                    userInput.pop_back();
-                } else if (event.text.unicode < 128 && event.text.unicode != '\b') {
-                    userInput += static_cast<char>(event.text.unicode);
-                }
-                inputText.setString(userInput);
-            }
-
-            // Activate input box on click
-            if (event.type == sf::Event::MouseButtonPressed) {
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                 sf::Vector2i mousePos = sf::Mouse::getPosition(window);
-                if (inputBox.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
-                    isInputActive = true;
-                } else {
-                    isInputActive = false;
 
-                    // Check if a day box is clicked
+                // Check if clicking in the general task area
+                if (mousePos.x >= 20.f && mousePos.x <= 200.f && mousePos.y >= 50.f && mousePos.y <= 450.f) {
+                    generalTaskSelected = true;
+                    selectedDay = -1;
+                } else {
+                    generalTaskSelected = false;
+
                     for (int i = 0; i < 7; ++i) {
-                        float x = 10.f + i * 115.f;
-                        float y = 10.f;
-                        if (mousePos.x >= x && mousePos.x <= x + 105.f &&
-                            mousePos.y >= y && mousePos.y <= y + 65.f) {
-                            selectedDay = days[i];
-                            std::cout << "Selected day: " << selectedDay << std::endl;
+                        sf::FloatRect boxBounds(positions[i], {150.f, 50.f});
+                        if (boxBounds.contains(static_cast<sf::Vector2f>(mousePos))) {
+                            selectedDay = i;
+                            generalTaskSelected = false;
                         }
                     }
                 }
             }
 
-            // Submit task on Enter
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter) {
-                if (!userInput.empty()) {
-                    tasks[selectedDay].push_back(userInput);
-                    std::cout << "Task added to " << selectedDay << ": " << userInput << std::endl;
-                    userInput.clear();
-                    inputText.setString(userInput);
+            // Handle text input
+            if (event.type == sf::Event::TextEntered) {
+                if (event.text.unicode == '\b') { // Handle backspace
+                    if (!userInput.empty())
+                        userInput.pop_back();
+                } else if (event.text.unicode == '\r' || event.text.unicode == '\n') { // Handle Enter
+                    if (generalTaskSelected && !userInput.empty()) {
+                        generalTasks.push_back(userInput);
+                        userInput.clear();
+                    } else if (selectedDay != -1 && !userInput.empty()) {
+                        weekTasks[weekOffset][selectedDay].push_back(userInput);
+                        userInput.clear();
+                    }
+                } else if (event.text.unicode < 128) { // Append regular characters
+                    userInput += static_cast<char>(event.text.unicode);
+                }
+            }
+
+            // Handle arrow keys to switch weeks
+            if (event.type == sf::Event::KeyPressed) {
+                if (event.key.code == sf::Keyboard::Left) {  // Go to previous week
+                    weekOffset--;
+                    weekDates = getWeekDates(weekOffset);
+                    if (weekTasks.find(weekOffset) == weekTasks.end()) {
+                        weekTasks[weekOffset] = std::vector<std::vector<std::string>>(7);  // Initialize new week
+                    }
+                } else if (event.key.code == sf::Keyboard::Right) {  // Go to next week
+                    weekOffset++;
+                    weekDates = getWeekDates(weekOffset);
+                    if (weekTasks.find(weekOffset) == weekTasks.end()) {
+                        weekTasks[weekOffset] = std::vector<std::vector<std::string>>(7);  // Initialize new week
+                    }
                 }
             }
         }
+        
+        
 
-        // Clear and draw UI elements
-        window.clear(backgroundColor);
+        inputText.setString(userInput);
 
-        // Instruction and input box
-        window.draw(instructionText);
-        window.draw(inputBox);
-        window.draw(inputText);
+        window.clear();
+        window.draw(plannerSprite);
 
-        // Draw day boxes and labels
+        // Draw general tasks
+        float taskY = generalTaskStartY;
+        for (const auto &task : generalTasks) {
+            generalTaskText.setString(task);
+            generalTaskText.setPosition(generalTaskStartX, taskY);
+            window.draw(generalTaskText);
+            taskY += generalTaskSpacing;
+        }
+
+        // Draw weekly planner
         for (int i = 0; i < 7; ++i) {
-            dayBox.setFillColor(dayColors[i]);
-            dayBox.setPosition(10.f + i * 115.f, 10.f);
-            window.draw(dayBox);
+            dateText.setString(weekDates[i]);
+            dateText.setPosition(positions[i]);
+            window.draw(dateText);
 
-            // Day name text
-            sf::Text dayText(days[i], font, 18);
-            dayText.setFillColor(sf::Color::Black);
-            dayText.setPosition(10.f + i * 115.f + 10.f, 20.f);
-            window.draw(dayText);
-
-            // Highlight selected day
-            if (selectedDay == days[i]) {
-                sf::RectangleShape highlightBox(sf::Vector2f(105.f, 65.f));
-                highlightBox.setFillColor(sf::Color::Transparent);
-                highlightBox.setOutlineThickness(3.f);
-                highlightBox.setOutlineColor(sf::Color::Black);
-                highlightBox.setPosition(10.f + i * 115.f, 10.f);
-                window.draw(highlightBox);
+            float taskY = positions[i].y + 20.f;
+            float taskX = positions[i].x - 140.f;
+            for (const auto &task : weekTasks[weekOffset][i]) {
+                taskText.setString(task);
+                taskText.setPosition(taskX, taskY);
+                window.draw(taskText);
+                taskY += 15.f;
             }
         }
 
-        // Display tasks for selected day
-        if (!tasks[selectedDay].empty()) {
-            std::string taskList = selectedDay + " Tasks:\n";
-            for (const auto& task : tasks[selectedDay]) {
-                taskList += "- " + task + "\n";
-            }
-            taskText.setString(taskList);
-        } else {
-            taskText.setString("No tasks for " + selectedDay);
+        // Draw input box and text
+        if (selectedDay != -1 || generalTaskSelected) {
+            window.draw(inputBox);
+            window.draw(inputText);
         }
-        window.draw(taskText);
 
         window.display();
     }
